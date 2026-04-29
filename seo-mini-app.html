@@ -575,8 +575,25 @@
             </form>
         </section>
 
-        <div class="alert alert-info">
-            <strong>ℹ️ Note:</strong> This tool performs client-side analysis using browser APIs. For production use with real data, integrate with SEO APIs like Ahrefs, SEMrush, Google PageSpeed Insights, etc.
+        <div class="alert alert-info" id="apiNotice">
+            <strong>ℹ️ Note:</strong> This tool currently runs in demo mode with simulated data. For real analysis:
+            <ul style="margin-top: 10px; padding-left: 20px;">
+                <li>Add your Google PageSpeed Insights API key below for real speed metrics</li>
+                <li>Integrate Ahrefs/SEMrush APIs for backlink data (requires paid subscription)</li>
+                <li>Use Google Search Console API for keyword rankings</li>
+            </ul>
+        </div>
+
+        <div class="search-section" style="margin-top: 20px;">
+            <form class="search-form" id="apiConfigForm">
+                <div class="input-group">
+                    <label for="pagespeedApiKey">Google PageSpeed Insights API Key (Optional)</label>
+                    <input type="text" id="pagespeedApiKey" placeholder="AIzaSy...">
+                </div>
+                <button type="submit" class="btn" style="background: var(--success);">
+                    💾 Save API Keys
+                </button>
+            </form>
         </div>
 
         <div class="loading" id="loading">
@@ -1287,12 +1304,27 @@
 
         // Perform analysis
         async function performAnalysis(website, competitors, keywords) {
-            // Simulate API calls with realistic data generation
-            await sleep(1000);
+            // Check for real API key
+            const pagespeedApiKey = localStorage.getItem('pagespeedApiKey');
             
-            // Generate mock data for demonstration
+            // Generate base mock data
             analysisData = generateMockData(website, competitors, keywords);
-            
+
+            // If API key exists, fetch real PageSpeed data
+            if (pagespeedApiKey) {
+                try {
+                    const realSpeedData = await fetchRealPageSpeed(website, pagespeedApiKey);
+                    if (realSpeedData) {
+                        analysisData.speed = realSpeedData;
+                    }
+                } catch (error) {
+                    console.warn('Failed to fetch real PageSpeed data, using simulated data:', error);
+                }
+            } else {
+                // Simulate API calls with realistic data generation
+                await sleep(1000);
+            }
+
             // Update all sections
             updateOverview(analysisData);
             updateBacklinks(analysisData);
@@ -1301,9 +1333,83 @@
             updateContent(analysisData);
             updateCompetitors(analysisData);
             updateSpeed(analysisData);
-            
+
             // Create charts
             createCharts(analysisData);
+        }
+
+        // Fetch real PageSpeed Insights data
+        async function fetchRealPageSpeed(url, apiKey) {
+            try {
+                const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${apiKey}&category=PERFORMANCE&category=ACCESSIBILITY&category=BEST_PRACTICES&category=SEO`;
+                
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('API request failed');
+                
+                const data = await response.json();
+                
+                if (data.lighthouseResult && data.lighthouseResult.categories) {
+                    const categories = data.lighthouseResult.categories;
+                    const metrics = data.lighthouseResult.audits;
+                    
+                    return {
+                        performance: Math.round(categories.performance.score * 100),
+                        accessibility: Math.round(categories.accessibility.score * 100),
+                        bestPractices: Math.round(categories['best-practices'].score * 100),
+                        seo: Math.round(categories.seo.score * 100),
+                        lcp: metrics['largest-contentful-paint']?.displayValue || '2.5s',
+                        fid: metrics['interactive']?.displayValue || '100ms',
+                        cls: metrics['cumulative-layout-shift']?.displayValue || '0.1',
+                        fcp: metrics['first-contentful-paint']?.displayValue || '1.2s',
+                        tbt: metrics['total-blocking-time']?.displayValue || '150ms',
+                        opportunities: extractOpportunities(metrics),
+                        diagnostics: extractDiagnostics(metrics)
+                    };
+                }
+            } catch (error) {
+                console.error('PageSpeed API error:', error);
+            }
+            return null;
+        }
+
+        function extractOpportunities(metrics) {
+            const opps = [];
+            if (metrics['render-blocking-resources']) {
+                opps.push({
+                    title: 'Eliminate render-blocking resources',
+                    savings: metrics['render-blocking-resources'].details?.overallSavingsMs || 0
+                });
+            }
+            if (metrics['unused-css-rules']) {
+                opps.push({
+                    title: 'Remove unused CSS',
+                    savings: metrics['unused-css-rules'].details?.overallSavingsBytes || 0
+                });
+            }
+            if (metrics['uses-optimized-images']) {
+                opps.push({
+                    title: 'Efficiently encode images',
+                    savings: metrics['uses-optimized-images'].details?.overallSavingsBytes || 0
+                });
+            }
+            return opps.slice(0, 5);
+        }
+
+        function extractDiagnostics(metrics) {
+            const diags = [];
+            if (metrics['mainthread-work-breakdown']) {
+                diags.push({
+                    title: 'Minimize main-thread work',
+                    value: metrics['mainthread-work-breakdown'].displayValue || '2.1s'
+                });
+            }
+            if (metrics['bootup-time']) {
+                diags.push({
+                    title: 'Reduce JavaScript execution time',
+                    value: metrics['bootup-time'].displayValue || '1.3s'
+                });
+            }
+            return diags.slice(0, 5);
         }
 
         // Generate mock data
@@ -2005,10 +2111,32 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        // Initialize with some default data for demo
+        // API Configuration Form
+        document.getElementById('apiConfigForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pagespeedKey = document.getElementById('pagespeedApiKey').value.trim();
+            
+            if (pagespeedKey) {
+                localStorage.setItem('pagespeedApiKey', pagespeedKey);
+                alert('✅ API key saved! Real PageSpeed analysis will be used on next run.');
+            } else {
+                localStorage.removeItem('pagespeedApiKey');
+                alert('ℹ️ Running in demo mode with simulated data.');
+            }
+        });
+
+        // Load saved API keys
         window.addEventListener('load', () => {
             console.log('SEO Pro Analyzer loaded successfully!');
             console.log('Enter a website URL and click "Start Analysis" to begin.');
+            
+            // Load saved API keys
+            const savedKey = localStorage.getItem('pagespeedApiKey');
+            if (savedKey) {
+                document.getElementById('pagespeedApiKey').value = savedKey;
+                document.getElementById('apiNotice').innerHTML = '<strong>✅ Ready:</strong> Google PageSpeed Insights API configured. Real speed metrics will be fetched.';
+                document.getElementById('apiNotice').className = 'alert alert-success';
+            }
         });
     </script>
 </body>
