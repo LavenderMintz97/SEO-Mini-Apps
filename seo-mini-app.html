@@ -3,819 +3,533 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro SEO Mini App - Unlimited Analysis</title>
+    <title>Pro SEO Unlimited - Deep Analysis & Silo Mapping</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #e2e8f0; }
-        
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --dark: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        body {
+            background-color: var(--dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
         .glass-panel {
             background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
         }
-
         .gradient-text {
-            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            background: linear-gradient(to right, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        .metric-card {
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
             transition: all 0.3s ease;
         }
-        .metric-card:hover {
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.5);
         }
-
-        .tab-btn.active {
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-            border-bottom: 2px solid #60a5fa;
+        /* Silo Tree Styles */
+        .silo-tree ul {
+            padding-top: 20px; position: relative;
+            transition: all 0.5s;
         }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
+        .silo-tree li {
+            float: left; text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+            transition: all 0.5s;
+        }
+        .silo-tree li::before, .silo-tree li::after {
+            content: ''; position: absolute; top: 0; right: 50%;
+            border-top: 2px solid #475569;
+            width: 50%; height: 20px;
+        }
+        .silo-tree li::after {
+            right: auto; left: 50%;
+            border-left: 2px solid #475569;
+        }
+        .silo-tree li:only-child::after, .silo-tree li:only-child::before {
+            display: none;
+        }
+        .silo-tree li:only-child { padding-top: 0; }
+        .silo-tree li:first-child::before, .silo-tree li:last-child::after {
+            border: 0 none;
+        }
+        .silo-tree li:last-child::before{
+            border-right: 2px solid #475569;
+            border-radius: 0 5px 0 0;
+        }
+        .silo-tree li:first-child::after{
+            border-radius: 5px 0 0 0;
+        }
+        .silo-tree ul ul::before{
+            content: ''; position: absolute; top: 0; left: 50%;
+            border-left: 2px solid #475569;
+            width: 0; height: 20px;
+        }
+        .silo-node {
+            border: 2px solid #475569;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #fff;
+            font-size: 14px;
+            display: inline-block;
+            border-radius: 8px;
+            background: #334155;
+            transition: all 0.3s;
+            min-width: 120px;
+            cursor: pointer;
+        }
+        .silo-node:hover, .silo-node.active {
+            background: var(--primary);
+            border-color: var(--secondary);
+            transform: scale(1.05);
+        }
+        .silo-score {
+            font-size: 10px;
+            display: block;
+            margin-top: 4px;
+            opacity: 0.8;
+        }
+        /* Table Styles */
+        .data-table-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .data-table-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .data-table-container::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
         .loader {
-            border: 3px solid #1e293b;
-            border-top: 3px solid #60a5fa;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
             border-radius: 50%;
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
         }
-
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .detail-row:last-child { border-bottom: none; }
         
-        .badge {
-            padding: 2px 8px;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
+        .tab-btn.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
         }
-        .badge-good { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-        .badge-warn { background: rgba(234, 179, 8, 0.2); color: #facc15; }
-        .badge-bad { background: rgba(239, 68, 68, 0.2); color: #f87171; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen p-6">
 
-    <!-- Navbar -->
-    <nav class="border-b border-slate-700 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-rocket text-blue-500 text-2xl"></i>
-                    <span class="font-bold text-xl tracking-tight text-white">SEO<span class="text-blue-500">Master</span> Pro</span>
-                </div>
-                <div class="text-sm text-slate-400">Unlimited Credits • Local Analysis</div>
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto mb-10 text-center">
+        <h1 class="text-5xl font-bold mb-4 gradient-text">SEO Deep Dive & Silo Architect</h1>
+        <p class="text-slate-400 text-lg">Unlimited Backlink Analysis, Competitor Gaps, and Intelligent Silo Mapping</p>
+    </header>
+
+    <!-- Input Section -->
+    <div class="max-w-7xl mx-auto glass-panel p-8 mb-10 shadow-2xl">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Target Website URL</label>
+                <input type="url" id="targetUrl" placeholder="https://example.com" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Target Keywords (Comma separated)</label>
+                <input type="text" id="targetKeywords" placeholder="seo tools, backlink checker, site audit" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition">
             </div>
         </div>
-    </nav>
+        <div class="mt-6 flex justify-center">
+            <button onclick="startAnalysis()" class="btn-primary px-8 py-4 rounded-xl font-bold text-white shadow-lg flex items-center gap-2">
+                <i class="fas fa-rocket"></i> Start Deep Analysis
+            </button>
+        </div>
+        <div id="loading" class="hidden mt-6 text-center">
+            <div class="loader mx-auto mb-2"></div>
+            <p class="text-indigo-400 animate-pulse">Crawling domain architecture & analyzing backlink graphs...</p>
+        </div>
+    </div>
 
-    <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8">
+    <!-- Dashboard (Hidden by default) -->
+    <div id="dashboard" class="max-w-7xl mx-auto hidden space-y-8">
         
-        <!-- Input Section -->
-        <div class="max-w-4xl mx-auto mb-12 text-center">
-            <h1 class="text-4xl font-bold mb-4 gradient-text">Deep Dive SEO Analysis</h1>
-            <p class="text-slate-400 mb-8">Comprehensive Backlink, Competitor, and Technical Audit with no limits.</p>
-            
-            <div class="glass-panel p-2 flex flex-col md:flex-row gap-2 max-w-2xl mx-auto">
-                <input type="url" id="targetUrl" placeholder="Enter domain (e.g., https://example.com)" 
-                    class="flex-grow bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
-                <button onclick="startAnalysis()" 
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-magnifying-glass"></i> Analyze
-                </button>
+        <!-- Top Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="glass-panel p-6 text-center">
+                <p class="text-slate-400 text-sm">Domain Rating</p>
+                <h3 class="text-4xl font-bold text-white mt-2" id="drScore">0</h3>
+                <div class="w-full bg-slate-700 h-2 mt-4 rounded-full overflow-hidden">
+                    <div class="bg-green-500 h-full" style="width: 0%" id="drBar"></div>
+                </div>
             </div>
-            
-            <div class="mt-4 flex justify-center gap-4 text-xs text-slate-500">
-                <span><i class="fa-solid fa-check text-green-500 mr-1"></i> Backlink Graph</span>
-                <span><i class="fa-solid fa-check text-green-500 mr-1"></i> Competitor Gap</span>
-                <span><i class="fa-solid fa-check text-green-500 mr-1"></i> Core Web Vitals</span>
-                <span><i class="fa-solid fa-check text-green-500 mr-1"></i> Silo Mapping</span>
+            <div class="glass-panel p-6 text-center">
+                <p class="text-slate-400 text-sm">Total Backlinks</p>
+                <h3 class="text-4xl font-bold text-white mt-2" id="totalBacklinks">0</h3>
+                <p class="text-xs text-green-400 mt-2"><i class="fas fa-arrow-up"></i> +12% this month</p>
+            </div>
+            <div class="glass-panel p-6 text-center">
+                <p class="text-slate-400 text-sm">Referring Domains</p>
+                <h3 class="text-4xl font-bold text-white mt-2" id="refDomains">0</h3>
+                <p class="text-xs text-slate-500 mt-2">Unique IPs</p>
+            </div>
+            <div class="glass-panel p-6 text-center">
+                <p class="text-slate-400 text-sm">Organic Traffic Est.</p>
+                <h3 class="text-4xl font-bold text-white mt-2" id="orgTraffic">0</h3>
+                <p class="text-xs text-indigo-400 mt-2">Global Rank #<span id="globalRank">0</span></p>
             </div>
         </div>
 
-        <!-- Loading State -->
-        <div id="loadingState" class="hidden flex-col items-center justify-center py-20">
-            <div class="loader mb-4"></div>
-            <h3 class="text-xl font-semibold text-white animate-pulse">Crawling Domain Architecture...</h3>
-            <p class="text-slate-400 mt-2" id="loadingText">Analyzing backlink profile & indexing status</p>
-        </div>
-
-        <!-- Dashboard Results -->
-        <div id="dashboard" class="hidden space-y-6">
-            
-            <!-- Header Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="glass-panel p-5 metric-card">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <p class="text-slate-400 text-sm font-medium">Domain Rating</p>
-                            <h3 class="text-3xl font-bold text-white mt-1" id="drScore">--</h3>
-                        </div>
-                        <div class="p-2 bg-blue-500/10 rounded-lg text-blue-400"><i class="fa-solid fa-chart-line"></i></div>
-                    </div>
-                    <div class="w-full bg-slate-700 h-1.5 rounded-full mt-2">
-                        <div class="bg-blue-500 h-1.5 rounded-full" style="width: 0%" id="drBar"></div>
-                    </div>
-                    <p class="text-xs text-slate-500 mt-2">Based on referring domains quality</p>
-                </div>
-
-                <div class="glass-panel p-5 metric-card">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <p class="text-slate-400 text-sm font-medium">Total Backlinks</p>
-                            <h3 class="text-3xl font-bold text-white mt-1" id="blCount">--</h3>
-                        </div>
-                        <div class="p-2 bg-purple-500/10 rounded-lg text-purple-400"><i class="fa-solid fa-link"></i></div>
-                    </div>
-                    <p class="text-xs text-green-400 mt-2 flex items-center"><i class="fa-solid fa-arrow-up mr-1"></i> +12% this month</p>
-                </div>
-
-                <div class="glass-panel p-5 metric-card">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <p class="text-slate-400 text-sm font-medium">Referring Domains</p>
-                            <h3 class="text-3xl font-bold text-white mt-1" id="rdCount">--</h3>
-                        </div>
-                        <div class="p-2 bg-indigo-500/10 rounded-lg text-indigo-400"><i class="fa-solid fa-globe"></i></div>
-                    </div>
-                    <p class="text-xs text-slate-500 mt-2">Unique IPs: <span id="uniqueIp">--</span></p>
-                </div>
-
-                <div class="glass-panel p-5 metric-card">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <p class="text-slate-400 text-sm font-medium">Organic Traffic</p>
-                            <h3 class="text-3xl font-bold text-white mt-1" id="orgTraffic">--</h3>
-                        </div>
-                        <div class="p-2 bg-green-500/10 rounded-lg text-green-400"><i class="fa-solid fa-users"></i></div>
-                    </div>
-                    <p class="text-xs text-slate-500 mt-2">Est. Value: <span id="trafficValue" class="text-white">$--</span></p>
-                </div>
+        <!-- Tabs -->
+        <div class="glass-panel overflow-hidden">
+            <div class="flex border-b border-slate-700 overflow-x-auto">
+                <button onclick="switchTab('backlinks')" class="tab-btn active px-6 py-4 text-sm font-medium hover:text-white transition">Referring Domains & Outreach</button>
+                <button onclick="switchTab('silo')" class="tab-btn px-6 py-4 text-sm font-medium hover:text-white transition">Silo Structure & Keywords</button>
+                <button onclick="switchTab('competitor')" class="tab-btn px-6 py-4 text-sm font-medium hover:text-white transition">Competitor Gap</button>
+                <button onclick="switchTab('technical')" class="tab-btn px-6 py-4 text-sm font-medium hover:text-white transition">Technical & Core Web Vitals</button>
             </div>
 
-            <!-- Tabs Navigation -->
-            <div class="border-b border-slate-700">
-                <nav class="flex gap-6 overflow-x-auto">
-                    <button onclick="switchTab('backlinks')" class="tab-btn active pb-3 px-1 text-sm font-medium text-white whitespace-nowrap">Backlink Profile</button>
-                    <button onclick="switchTab('competitors')" class="tab-btn pb-3 px-1 text-sm font-medium text-slate-400 hover:text-white whitespace-nowrap">Competitor Analysis</button>
-                    <button onclick="switchTab('keywords')" class="tab-btn pb-3 px-1 text-sm font-medium text-slate-400 hover:text-white whitespace-nowrap">Keyword Gaps</button>
-                    <button onclick="switchTab('technical')" class="tab-btn pb-3 px-1 text-sm font-medium text-slate-400 hover:text-white whitespace-nowrap">Technical & CWV</button>
-                    <button onclick="switchTab('silo')" class="tab-btn pb-3 px-1 text-sm font-medium text-slate-400 hover:text-white whitespace-nowrap">Silo Structure</button>
-                </nav>
-            </div>
-
-            <!-- Tab Content: Backlinks (Detailed) -->
-            <div id="tab-backlinks" class="tab-content space-y-6">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Left Col: Charts -->
-                    <div class="lg:col-span-2 space-y-6">
-                        <!-- Growth Chart -->
-                        <div class="glass-panel p-6">
-                            <h3 class="text-lg font-semibold text-white mb-4">Referring Domains Growth (6 Months)</h3>
-                            <canvas id="growthChart" height="100"></canvas>
-                        </div>
-
-                        <!-- Anchor Text Distribution -->
-                        <div class="glass-panel p-6">
-                            <h3 class="text-lg font-semibold text-white mb-4">Top Anchor Texts & Spam Score</h3>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm text-slate-400">
-                                    <thead class="text-xs uppercase bg-slate-800/50 text-slate-300">
-                                        <tr>
-                                            <th class="px-4 py-3 rounded-l-lg">Anchor Text</th>
-                                            <th class="px-4 py-3">Links</th>
-                                            <th class="px-4 py-3">Domains</th>
-                                            <th class="px-4 py-3 rounded-r-lg">Spam Score</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="anchorTableBody" class="divide-y divide-slate-700">
-                                        <!-- JS Populated -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Col: Deep Metrics -->
-                    <div class="space-y-6">
-                        <!-- Link Types -->
-                        <div class="glass-panel p-6">
-                            <h3 class="text-lg font-semibold text-white mb-4">Link Attributes</h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-slate-400">DoFollow</span>
-                                        <span class="text-white font-mono" id="dofollowPct">0%</span>
-                                    </div>
-                                    <div class="w-full bg-slate-700 h-2 rounded-full">
-                                        <div class="bg-green-500 h-2 rounded-full" style="width: 0%" id="dofollowBar"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-slate-400">NoFollow</span>
-                                        <span class="text-white font-mono" id="nofollowPct">0%</span>
-                                    </div>
-                                    <div class="w-full bg-slate-700 h-2 rounded-full">
-                                        <div class="bg-slate-500 h-2 rounded-full" style="width: 0%" id="nofollowBar"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-slate-400">Sponsored/UGC</span>
-                                        <span class="text-white font-mono" id="ugcPct">0%</span>
-                                    </div>
-                                    <div class="w-full bg-slate-700 h-2 rounded-full">
-                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 0%" id="ugcBar"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mt-6 pt-6 border-t border-slate-700 grid grid-cols-2 gap-4">
-                                <div class="text-center p-3 bg-slate-800/50 rounded-lg">
-                                    <div class="text-2xl font-bold text-white" id="govLinks">0</div>
-                                    <div class="text-xs text-slate-500">.GOV Links</div>
-                                </div>
-                                <div class="text-center p-3 bg-slate-800/50 rounded-lg">
-                                    <div class="text-2xl font-bold text-white" id="eduLinks">0</div>
-                                    <div class="text-xs text-slate-500">.EDU Links</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Link Types Pie -->
-                        <div class="glass-panel p-6">
-                            <h3 class="text-lg font-semibold text-white mb-4">Link Types</h3>
-                            <canvas id="linkTypeChart" height="200"></canvas>
-                            <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-center">
-                                <div class="text-slate-400"><span class="text-blue-400">●</span> Text</div>
-                                <div class="text-slate-400"><span class="text-purple-400">●</span> Image</div>
-                                <div class="text-slate-400"><span class="text-green-400">●</span> Form</div>
-                                <div class="text-slate-400"><span class="text-orange-400">●</span> Frame</div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Tab Content: Backlinks -->
+            <div id="tab-backlinks" class="p-6 block">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">Full Referring Domain List</h3>
+                    <button onclick="exportTable()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-white"><i class="fas fa-download"></i> Export CSV</button>
                 </div>
-
-                <!-- Top Referring Domains Table -->
-                <div class="glass-panel p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">Top Referring Domains</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-slate-400">
-                            <thead class="text-xs uppercase bg-slate-800/50 text-slate-300">
-                                <tr>
-                                    <th class="px-4 py-3">Domain</th>
-                                    <th class="px-4 py-3">DR</th>
-                                    <th class="px-4 py-3">Backlinks</th>
-                                    <th class="px-4 py-3">First Seen</th>
-                                    <th class="px-4 py-3">Last Checked</th>
-                                </tr>
-                            </thead>
-                            <tbody id="referringDomainsBody" class="divide-y divide-slate-700">
-                                <!-- JS Populated -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab Content: Competitors -->
-            <div id="tab-competitors" class="tab-content hidden space-y-6">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="glass-panel p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4">Competitor Overlap</h3>
-                        <canvas id="competitorRadar" height="250"></canvas>
-                    </div>
-                    <div class="glass-panel p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4">Shared Keywords Analysis</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
-                                <span class="text-white">Unique to You</span>
-                                <span class="text-blue-400 font-bold" id="uniqueYou">0</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
-                                <span class="text-white">Shared with Top Competitor</span>
-                                <span class="text-purple-400 font-bold" id="sharedTop">0</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
-                                <span class="text-white">Missing Opportunities</span>
-                                <span class="text-red-400 font-bold" id="missingOpp">0</span>
-                            </div>
-                        </div>
-                        <button class="w-full mt-6 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm transition">Export Competitor List</button>
-                    </div>
-                </div>
-                
-                <div class="glass-panel p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">Link Intersect (Who links them but not you)</h3>
-                    <table class="w-full text-left text-sm text-slate-400">
-                        <thead class="text-xs uppercase bg-slate-800/50 text-slate-300">
+                <div class="data-table-container">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-800 sticky top-0 z-10">
                             <tr>
-                                <th class="px-4 py-3">Referring Domain</th>
-                                <th class="px-4 py-3">Links to Comp A</th>
-                                <th class="px-4 py-3">Links to Comp B</th>
-                                <th class="px-4 py-3">Links to You</th>
-                                <th class="px-4 py-3">Action</th>
+                                <th class="p-4 text-xs font-semibold text-slate-400 uppercase">Domain</th>
+                                <th class="p-4 text-xs font-semibold text-slate-400 uppercase">DR</th>
+                                <th class="p-4 text-xs font-semibold text-slate-400 uppercase">Ext. Links</th>
+                                <th class="p-4 text-xs font-semibold text-slate-400 uppercase">Dofollow</th>
+                                <th class="p-4 text-xs font-semibold text-slate-400 uppercase">First Seen</th>
+                                <th class="p-4 text-xs font-semibold text-slate-400 uppercase">Anchor Text Sample</th>
+                                <th class="p-4 text-xs font-semibold text-slate-400 uppercase">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="intersectBody" class="divide-y divide-slate-700">
-                            <!-- JS Populated -->
+                        <tbody id="backlinkTableBody" class="divide-y divide-slate-700 text-sm">
+                            <!-- JS will populate -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Tab Content: Keywords -->
-            <div id="tab-keywords" class="tab-content hidden space-y-6">
-                <div class="glass-panel p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">Keyword Gap Analysis</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <input type="text" placeholder="Competitor 1 URL" class="bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white">
-                        <input type="text" placeholder="Competitor 2 URL" class="bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white">
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white rounded px-4 py-2 text-sm">Compare</button>
+            <!-- Tab Content: Silo -->
+            <div id="tab-silo" class="p-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass-panel p-6 overflow-x-auto">
+                        <h3 class="text-xl font-bold mb-4">Visual Silo Architecture</h3>
+                        <p class="text-xs text-slate-400 mb-6">Based on detected keywords: <span id="detectedKeywordsDisplay" class="text-indigo-400"></span></p>
+                        <div class="silo-tree" id="siloVisualizer">
+                            <!-- Tree generated by JS -->
+                        </div>
                     </div>
-                    <table class="w-full text-left text-sm text-slate-400">
-                        <thead class="text-xs uppercase bg-slate-800/50 text-slate-300">
+                    <div class="glass-panel p-6">
+                        <h3 class="text-xl font-bold mb-4">Silo Optimization Suggestions</h3>
+                        <div id="siloSuggestions" class="space-y-4">
+                            <!-- Suggestions generated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Competitor -->
+            <div id="tab-competitor" class="p-6 hidden">
+                <h3 class="text-xl font-bold mb-6">Keyword Gap Analysis</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-800">
                             <tr>
-                                <th class="px-4 py-3">Keyword</th>
-                                <th class="px-4 py-3">Your Pos</th>
-                                <th class="px-4 py-3">Comp A Pos</th>
-                                <th class="px-4 py-3">Comp B Pos</th>
-                                <th class="px-4 py-3">Volume</th>
-                                <th class="px-4 py-3">KD %</th>
+                                <th class="p-4 text-slate-400">Keyword</th>
+                                <th class="p-4 text-slate-400">Your Pos</th>
+                                <th class="p-4 text-green-400">Comp A Pos</th>
+                                <th class="p-4 text-blue-400">Comp B Pos</th>
+                                <th class="p-4 text-slate-400">Volume</th>
+                                <th class="p-4 text-slate-400">Difficulty</th>
                             </tr>
                         </thead>
-                        <tbody id="keywordGapBody" class="divide-y divide-slate-700">
-                            <!-- JS Populated -->
-                        </tbody>
+                        <tbody id="gapTableBody" class="divide-y divide-slate-700"></tbody>
                     </table>
                 </div>
             </div>
 
             <!-- Tab Content: Technical -->
-            <div id="tab-technical" class="tab-content hidden space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="glass-panel p-4 text-center">
-                        <div class="text-sm text-slate-400 mb-1">Performance</div>
-                        <div class="text-3xl font-bold text-green-400" id="perfScore">0</div>
-                    </div>
-                    <div class="glass-panel p-4 text-center">
-                        <div class="text-sm text-slate-400 mb-1">Accessibility</div>
-                        <div class="text-3xl font-bold text-blue-400" id="accScore">0</div>
-                    </div>
-                    <div class="glass-panel p-4 text-center">
-                        <div class="text-sm text-slate-400 mb-1">Best Practices</div>
-                        <div class="text-3xl font-bold text-purple-400" id="bpScore">0</div>
-                    </div>
-                    <div class="glass-panel p-4 text-center">
-                        <div class="text-sm text-slate-400 mb-1">SEO Score</div>
-                        <div class="text-3xl font-bold text-yellow-400" id="seoScore">0</div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div id="tab-technical" class="p-6 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="glass-panel p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4">Core Web Vitals</h3>
+                        <h3 class="text-lg font-bold mb-4">Core Web Vitals</h3>
                         <div class="space-y-4">
-                            <div class="detail-row">
-                                <span class="text-slate-300">LCP (Largest Contentful Paint)</span>
-                                <span class="font-mono text-white" id="lcpVal">-- s</span>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1"><span>LCP (Largest Contentful Paint)</span><span class="text-green-400">Good</span></div>
+                                <div class="w-full bg-slate-700 h-2 rounded-full"><div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div></div>
+                                <p class="text-xs text-slate-500 mt-1">1.2s (Target < 2.5s)</p>
                             </div>
-                            <div class="detail-row">
-                                <span class="text-slate-300">INP (Interaction to Next Paint)</span>
-                                <span class="font-mono text-white" id="inpVal">-- ms</span>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1"><span>INP (Interaction to Next Paint)</span><span class="text-yellow-400">Needs Improvement</span></div>
+                                <div class="w-full bg-slate-700 h-2 rounded-full"><div class="bg-yellow-500 h-2 rounded-full" style="width: 60%"></div></div>
+                                <p class="text-xs text-slate-500 mt-1">210ms (Target < 200ms)</p>
                             </div>
-                            <div class="detail-row">
-                                <span class="text-slate-300">CLS (Cumulative Layout Shift)</span>
-                                <span class="font-mono text-white" id="clsVal">--</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="text-slate-300">FCP (First Contentful Paint)</span>
-                                <span class="font-mono text-white" id="fcpVal">-- s</span>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1"><span>CLS (Cumulative Layout Shift)</span><span class="text-green-400">Good</span></div>
+                                <div class="w-full bg-slate-700 h-2 rounded-full"><div class="bg-green-500 h-2 rounded-full" style="width: 95%"></div></div>
+                                <p class="text-xs text-slate-500 mt-1">0.05 (Target < 0.1)</p>
                             </div>
                         </div>
                     </div>
-                    
                     <div class="glass-panel p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4">Critical Issues</h3>
-                        <ul class="space-y-3" id="techIssuesList">
-                            <!-- JS Populated -->
+                        <h3 class="text-lg font-bold mb-4">Critical Issues</h3>
+                        <ul class="space-y-3 text-sm">
+                            <li class="flex items-start gap-3 text-red-400"><i class="fas fa-exclamation-circle mt-1"></i> <span>3 Pages missing H1 tags</span></li>
+                            <li class="flex items-start gap-3 text-yellow-400"><i class="fas fa-exclamation-triangle mt-1"></i> <span>Images missing Alt attributes (12 instances)</span></li>
+                            <li class="flex items-start gap-3 text-blue-400"><i class="fas fa-info-circle mt-1"></i> <span>Robots.txt allows crawling of admin pages</span></li>
                         </ul>
                     </div>
                 </div>
             </div>
-
-            <!-- Tab Content: Silo -->
-            <div id="tab-silo" class="tab-content hidden space-y-6">
-                <div class="glass-panel p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">Site Architecture Visualizer</h3>
-                    <div class="bg-slate-900 rounded-lg p-8 overflow-x-auto flex justify-center">
-                        <div class="relative min-w-[600px]">
-                            <!-- Simple CSS Tree Visualization -->
-                            <div class="flex flex-col items-center gap-8">
-                                <div class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg shadow-blue-500/30">Homepage</div>
-                                <div class="h-8 w-px bg-slate-600"></div>
-                                <div class="flex gap-12 relative">
-                                    <div class="absolute top-[-16px] left-[16%] right-[16%] h-px bg-slate-600"></div>
-                                    
-                                    <div class="flex flex-col items-center">
-                                        <div class="bg-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold mb-2">Category A</div>
-                                        <div class="h-6 w-px bg-slate-600"></div>
-                                        <div class="flex gap-2">
-                                            <div class="bg-slate-800 text-slate-400 px-3 py-1 rounded text-xs">Page 1</div>
-                                            <div class="bg-slate-800 text-slate-400 px-3 py-1 rounded text-xs">Page 2</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex flex-col items-center">
-                                        <div class="bg-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold mb-2">Category B</div>
-                                        <div class="h-6 w-px bg-slate-600"></div>
-                                        <div class="flex gap-2">
-                                            <div class="bg-slate-800 text-slate-400 px-3 py-1 rounded text-xs">Page 3</div>
-                                            <div class="bg-slate-800 text-slate-400 px-3 py-1 rounded text-xs">Page 4</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex flex-col items-center">
-                                        <div class="bg-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold mb-2">Category C</div>
-                                        <div class="h-6 w-px bg-slate-600"></div>
-                                        <div class="flex gap-2">
-                                            <div class="bg-slate-800 text-slate-400 px-3 py-1 rounded text-xs">Page 5</div>
-                                            <div class="bg-slate-800 text-slate-400 px-3 py-1 rounded text-xs">Page 6</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-slate-800/50 p-4 rounded-lg">
-                            <div class="text-slate-400 text-sm">Depth Level</div>
-                            <div class="text-white font-bold text-lg">3 Clicks Max</div>
-                        </div>
-                        <div class="bg-slate-800/50 p-4 rounded-lg">
-                            <div class="text-slate-400 text-sm">Orphan Pages</div>
-                            <div class="text-red-400 font-bold text-lg" id="orphanPages">0</div>
-                        </div>
-                        <div class="bg-slate-800/50 p-4 rounded-lg">
-                            <div class="text-slate-400 text-sm">Internal Links</div>
-                            <div class="text-blue-400 font-bold text-lg" id="internalLinks">0</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-slate-800 bg-slate-900 py-6 mt-12">
-        <div class="container mx-auto px-4 text-center text-slate-500 text-sm">
-            <p>&copy; 2023 SEO Master Pro. Generated Report for <span id="footerDomain" class="text-slate-300">-</span></p>
-            <button onclick="exportReport()" class="mt-4 text-blue-400 hover:text-blue-300 underline">Download HTML Report</button>
-        </div>
-    </footer>
+    </div>
 
     <script>
-        // --- Mock Data Generators for Simulation ---
-        function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-        function formatNumber(num) { return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+        // Mock Data Generators for "Unlimited" feel
+        const tlds = ['.com', '.net', '.org', '.io', '.co.uk', '.edu', '.gov'];
+        const prefixes = ['tech', 'blog', 'news', 'forum', 'site', 'web', 'app', 'dev', 'seo', 'marketing'];
+        const anchors = ['click here', 'best seo tool', 'read more', 'website', 'homepage', 'check this out', 'source', 'reference'];
 
-        let charts = {};
+        function generateRandomData() {
+            return Math.floor(Math.random() * 100);
+        }
+
+        function generateDomains(count) {
+            let domains = [];
+            for(let i=0; i<count; i++) {
+                const pre = prefixes[Math.floor(Math.random() * prefixes.length)];
+                const num = Math.floor(Math.random() * 999);
+                const tld = tlds[Math.floor(Math.random() * tlds.length)];
+                const dr = Math.floor(Math.random() * 90) + 5;
+                const links = Math.floor(Math.random() * 5000) + 50;
+                const dofollow = Math.floor(links * (Math.random() * 0.4 + 0.6)); // 60-100% dofollow
+                
+                domains.push({
+                    domain: `${pre}${num}${tld}`,
+                    dr: dr,
+                    links: links,
+                    dofollow: dofollow,
+                    firstSeen: `202${Math.floor(Math.random()*4)}-${Math.floor(Math.random()*12)+1}-${Math.floor(Math.random()*28)+1}`,
+                    anchor: anchors[Math.floor(Math.random() * anchors.length)]
+                });
+            }
+            return domains.sort((a,b) => b.dr - a.dr); // Sort by DR
+        }
+
+        let currentRefDomains = [];
 
         function startAnalysis() {
-            const urlInput = document.getElementById('targetUrl').value;
-            if (!urlInput) { alert('Please enter a URL'); return; }
-
-            // UI State: Loading
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('loadingState').classList.add('flex');
-
-            const loadingTexts = [
-                "Resolving DNS...",
-                "Crawling sitemap.xml...",
-                "Analyzing backlink graph...",
-                "Calculating Domain Authority...",
-                "Fetching Core Web Vitals...",
-                "Mapping silo structure..."
-            ];
-
-            let step = 0;
-            const interval = setInterval(() => {
-                if (step < loadingTexts.length) {
-                    document.getElementById('loadingText').innerText = loadingTexts[step];
-                    step++;
-                }
-            }, 600);
-
-            // Simulate API delay
-            setTimeout(() => {
-                clearInterval(interval);
-                document.getElementById('loadingState').classList.add('hidden');
-                document.getElementById('loadingState').classList.remove('flex');
-                document.getElementById('dashboard').classList.remove('hidden');
-                document.getElementById('footerDomain').innerText = urlInput;
-                
-                generateData(urlInput);
-            }, 3500);
-        }
-
-        function switchTab(tabId) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            // Show selected
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const url = document.getElementById('targetUrl').value;
+            const keywords = document.getElementById('targetKeywords').value;
             
-            // Update buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'text-white');
-                btn.classList.add('text-slate-400');
-            });
-            event.target.classList.add('active', 'text-white');
-            event.target.classList.remove('text-slate-400');
-        }
-
-        function generateData(url) {
-            // 1. Header Metrics
-            const dr = getRandomInt(15, 85);
-            const bl = getRandomInt(5000, 500000);
-            const rd = getRandomInt(50, 5000);
-            const traffic = getRandomInt(1000, 100000);
-            
-            document.getElementById('drScore').innerText = dr;
-            document.getElementById('drBar').style.width = `${dr}%`;
-            document.getElementById('blCount').innerText = formatNumber(bl);
-            document.getElementById('rdCount').innerText = formatNumber(rd);
-            document.getElementById('uniqueIp').innerText = formatNumber(Math.floor(rd * 0.85));
-            document.getElementById('orgTraffic').innerText = formatNumber(traffic);
-            document.getElementById('trafficValue').innerText = `$${formatNumber(Math.floor(traffic * 1.5))}`;
-
-            // 2. Backlink Details
-            const doFollow = getRandomInt(60, 90);
-            const noFollow = 100 - doFollow;
-            const ugc = getRandomInt(1, 5);
-            
-            document.getElementById('dofollowPct').innerText = `${doFollow}%`;
-            document.getElementById('dofollowBar').style.width = `${doFollow}%`;
-            document.getElementById('nofollowPct').innerText = `${noFollow}%`;
-            document.getElementById('nofollowBar').style.width = `${noFollow}%`;
-            document.getElementById('ugcPct').innerText = `${ugc}%`;
-            document.getElementById('ugcBar').style.width = `${ugc}%`;
-            
-            document.getElementById('govLinks').innerText = getRandomInt(0, 15);
-            document.getElementById('eduLinks').innerText = getRandomInt(0, 25);
-
-            // 3. Charts Initialization
-            initGrowthChart();
-            initLinkTypeChart();
-            initCompetitorRadar();
-
-            // 4. Tables Population
-            populateAnchorTable();
-            populateReferringDomains();
-            populateIntersect();
-            populateKeywordGap();
-            populateTechIssues();
-
-            // 5. Technical Scores
-            document.getElementById('perfScore').innerText = getRandomInt(70, 98);
-            document.getElementById('accScore').innerText = getRandomInt(80, 100);
-            document.getElementById('bpScore').innerText = getRandomInt(85, 100);
-            document.getElementById('seoScore').innerText = getRandomInt(90, 100);
-
-            document.getElementById('lcpVal').innerText = (Math.random() * 1.5 + 0.5).toFixed(1) + ' s';
-            document.getElementById('inpVal').innerText = getRandomInt(50, 180) + ' ms';
-            document.getElementById('clsVal').innerText = (Math.random() * 0.1).toFixed(2);
-            document.getElementById('fcpVal').innerText = (Math.random() * 1.0 + 0.3).toFixed(1) + ' s';
-
-            document.getElementById('orphanPages').innerText = getRandomInt(0, 12);
-            document.getElementById('internalLinks').innerText = formatNumber(getRandomInt(200, 2000));
-            
-            // Competitor Stats
-            document.getElementById('uniqueYou').innerText = formatNumber(getRandomInt(100, 2000));
-            document.getElementById('sharedTop').innerText = formatNumber(getRandomInt(500, 5000));
-            document.getElementById('missingOpp').innerText = formatNumber(getRandomInt(200, 3000));
-        }
-
-        function initGrowthChart() {
-            const ctx = document.getElementById('growthChart').getContext('2d');
-            if(charts.growth) charts.growth.destroy();
-            
-            charts.growth = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-                    datasets: [{
-                        label: 'Referring Domains',
-                        data: [120, 150, 180, 220, 290, 350],
-                        borderColor: '#60a5fa',
-                        backgroundColor: 'rgba(96, 165, 250, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-                    }
-                }
-            });
-        }
-
-        function initLinkTypeChart() {
-            const ctx = document.getElementById('linkTypeChart').getContext('2d');
-            if(charts.linkType) charts.linkType.destroy();
-
-            charts.linkType = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Text', 'Image', 'Form', 'Frame'],
-                    datasets: [{
-                        data: [65, 25, 8, 2],
-                        backgroundColor: ['#3b82f6', '#a855f7', '#22c55e', '#f97316'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    cutout: '70%',
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
-        function initCompetitorRadar() {
-            const ctx = document.getElementById('competitorRadar').getContext('2d');
-            if(charts.radar) charts.radar.destroy();
-
-            charts.radar = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: ['Backlinks', 'Org Traffic', 'Keywords', 'DR', 'Speed'],
-                    datasets: [
-                        {
-                            label: 'You',
-                            data: [65, 59, 90, 81, 56],
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.2)'
-                        },
-                        {
-                            label: 'Competitor A',
-                            data: [80, 75, 60, 90, 70],
-                            borderColor: '#a855f7',
-                            backgroundColor: 'rgba(168, 85, 247, 0.2)'
-                        }
-                    ]
-                },
-                options: {
-                    scales: {
-                        r: {
-                            angleLines: { color: '#334155' },
-                            grid: { color: '#334155' },
-                            pointLabels: { color: '#cbd5e1' },
-                            ticks: { display: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        function populateAnchorTable() {
-            const anchors = [
-                { text: "brand name", links: 1204, dom: 450, spam: 1 },
-                { text: "click here", links: 850, dom: 320, spam: 45 },
-                { text: "best seo tools", links: 620, dom: 210, spam: 5 },
-                { text: "https://example.com", links: 500, dom: 480, spam: 2 },
-                { text: "read more", links: 300, dom: 150, spam: 12 }
-            ];
-
-            const tbody = document.getElementById('anchorTableBody');
-            tbody.innerHTML = '';
-            anchors.forEach(a => {
-                let badgeClass = a.spam > 30 ? 'badge-bad' : (a.spam > 10 ? 'badge-warn' : 'badge-good');
-                let row = `<tr class="hover:bg-slate-800/50">
-                    <td class="px-4 py-3 font-medium text-white">${a.text}</td>
-                    <td class="px-4 py-3">${formatNumber(a.links)}</td>
-                    <td class="px-4 py-3">${formatNumber(a.dom)}</td>
-                    <td class="px-4 py-3"><span class="badge ${badgeClass}">${a.spam}/100</span></td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function populateReferringDomains() {
-            const domains = [
-                { d: "techcrunch.com", dr: 92, bl: 12, first: "2023-01-15", last: "2 days ago" },
-                { d: "medium.com", dr: 94, bl: 45, first: "2022-11-20", last: "1 day ago" },
-                { d: "reddit.com", dr: 91, bl: 8, first: "2023-03-10", last: "5 hours ago" },
-                { d: "forbes.com", dr: 95, bl: 3, first: "2023-06-01", last: "1 week ago" },
-                { d: "github.io", dr: 90, bl: 120, first: "2022-08-15", last: "3 days ago" }
-            ];
-
-            const tbody = document.getElementById('referringDomainsBody');
-            tbody.innerHTML = '';
-            domains.forEach(d => {
-                let row = `<tr class="hover:bg-slate-800/50">
-                    <td class="px-4 py-3 font-medium text-blue-400">${d.d}</td>
-                    <td class="px-4 py-3"><span class="badge badge-good">${d.dr}</span></td>
-                    <td class="px-4 py-3">${d.bl}</td>
-                    <td class="px-4 py-3 text-slate-500">${d.first}</td>
-                    <td class="px-4 py-3 text-slate-500">${d.last}</td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function populateIntersect() {
-            const tbody = document.getElementById('intersectBody');
-            tbody.innerHTML = '';
-            for(let i=0; i<5; i++) {
-                let row = `<tr class="hover:bg-slate-800/50">
-                    <td class="px-4 py-3 text-white">blog.example${i}.com</td>
-                    <td class="px-4 py-3 text-green-400"><i class="fa-solid fa-check"></i></td>
-                    <td class="px-4 py-3 text-green-400"><i class="fa-solid fa-check"></i></td>
-                    <td class="px-4 py-3 text-red-400"><i class="fa-solid fa-xmark"></i></td>
-                    <td class="px-4 py-3"><button class="text-xs bg-blue-600 px-2 py-1 rounded hover:bg-blue-700">Outreach</button></td>
-                </tr>`;
-                tbody.innerHTML += row;
+            if(!url && !keywords) {
+                alert("Please enter a URL or Keywords");
+                return;
             }
+
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+
+            // Simulate processing time
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                
+                // Populate Metrics
+                document.getElementById('drScore').innerText = generateRandomData();
+                document.getElementById('drBar').style.width = `${generateRandomData()}%`;
+                document.getElementById('totalBacklinks').innerText = (generateRandomData() * 1542).toLocaleString();
+                
+                const refCount = generateRandomData() * 12;
+                document.getElementById('refDomains').innerText = Math.floor(refCount).toLocaleString();
+                document.getElementById('orgTraffic').innerText = (refCount * 45).toLocaleString();
+                document.getElementById('globalRank').innerText = (generateRandomData() * 5000).toLocaleString();
+
+                // Generate Detailed Backlink Data
+                currentRefDomains = generateDomains(50); // Generate 50 detailed rows
+                renderBacklinkTable(currentRefDomains);
+
+                // Process Silo & Keywords
+                processSiloStructure(keywords, url);
+                
+                // Process Competitors
+                processCompetitorGap(keywords);
+
+            }, 2000);
         }
 
-        function populateKeywordGap() {
-            const tbody = document.getElementById('keywordGapBody');
+        function renderBacklinkTable(data) {
+            const tbody = document.getElementById('backlinkTableBody');
             tbody.innerHTML = '';
-            const keywords = ["seo audit tool", "backlink checker free", "keyword research api", "site speed test", "competitor analysis"];
             
-            keywords.forEach((k, i) => {
-                let myPos = i === 0 ? 1 : (i === 1 ? '-' : getRandomInt(10, 50));
-                let row = `<tr class="hover:bg-slate-800/50">
-                    <td class="px-4 py-3 text-white font-medium">${k}</td>
-                    <td class="px-4 py-3 ${myPos === '-' ? 'text-red-400' : 'text-green-400'}">${myPos}</td>
-                    <td class="px-4 py-3 text-purple-400">${getRandomInt(1, 5)}</td>
-                    <td class="px-4 py-3 text-purple-400">${getRandomInt(1, 8)}</td>
-                    <td class="px-4 py-3">${formatNumber(getRandomInt(1000, 50000))}</td>
-                    <td class="px-4 py-3"><span class="badge ${getRandomInt(0,100) > 50 ? 'badge-warn' : 'badge-good'}">${getRandomInt(10, 90)}</span></td>
-                </tr>`;
-                tbody.innerHTML += row;
+            data.forEach(domain => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800 transition";
+                tr.innerHTML = `
+                    <td class="p-4 font-medium text-white">${domain.domain}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold ${domain.dr > 50 ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}">DR ${domain.dr}</span></td>
+                    <td class="p-4 text-slate-300">${domain.links.toLocaleString()}</td>
+                    <td class="p-4 text-slate-300">${domain.dofollow.toLocaleString()} (${Math.round((domain.dofollow/domain.links)*100)}%)</td>
+                    <td class="p-4 text-slate-500 text-xs">${domain.firstSeen}</td>
+                    <td class="p-4 text-slate-400 italic">"${domain.anchor}"</td>
+                    <td class="p-4">
+                        <button class="text-indigo-400 hover:text-indigo-300 text-xs font-bold uppercase">Outreach</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
             });
         }
 
-        function populateTechIssues() {
-            const issues = [
-                { msg: "Missing meta descriptions on 12 pages", type: "warn" },
-                { msg: "H1 tag missing on /contact-us", type: "bad" },
-                { msg: "Images missing alt attributes (24 found)", type: "warn" },
-                { msg: "Canonical tags pointing to HTTP instead of HTTPS", type: "bad" }
-            ];
+        function processSiloStructure(keywordsInput, url) {
+            const container = document.getElementById('siloVisualizer');
+            const suggestions = document.getElementById('siloSuggestions');
+            const detectedDisplay = document.getElementById('detectedKeywordsDisplay');
             
-            const list = document.getElementById('techIssuesList');
-            list.innerHTML = '';
-            issues.forEach(issue => {
-                let color = issue.type === 'bad' ? 'text-red-400' : 'text-yellow-400';
-                let icon = issue.type === 'bad' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation';
-                list.innerHTML += `<li class="flex items-start gap-3 text-sm ${color}">
-                    <i class="fa-solid ${icon} mt-1"></i>
-                    <span>${issue.msg}</span>
-                </li>`;
+            let keywords = [];
+            if(keywordsInput) {
+                keywords = keywordsInput.split(',').map(k => k.trim()).filter(k => k);
+            } else {
+                // Default fallback if no keywords entered
+                keywords = ['Services', 'Products', 'Blog', 'About Us'];
+            }
+
+            detectedDisplay.innerText = keywords.join(', ');
+
+            // Build Tree HTML
+            let html = `<ul>
+                <li>
+                    <div class="silo-node active">
+                        <strong>Home</strong><br>${url || 'example.com'}
+                        <span class="silo-score">Auth: 100</span>
+                    </div>`;
+            
+            if(keywords.length > 0) {
+                html += `<ul>`;
+                keywords.forEach((kw, index) => {
+                    // Create parent silo
+                    const siloName = kw.replace(/\s+/g, '-').toLowerCase();
+                    html += `
+                    <li>
+                        <div class="silo-node">
+                            <strong>${kw}</strong><br>/${siloName}/
+                            <span class="silo-score">Relevance: ${90 - (index*5)}%</span>
+                        </div>`;
+                    
+                    // Create child pages (Simulated)
+                    html += `<ul>`;
+                    for(let i=1; i<=3; i++) {
+                        html += `
+                        <li>
+                            <div class="silo-node">
+                                ${kw} Guide ${i}<br>/${siloName}/guide-${i}
+                                <span class="silo-score">Links: ${Math.floor(Math.random()*20)}</span>
+                            </div>
+                        </li>`;
+                    }
+                    html += `</ul></li>`;
+                });
+                html += `</ul>`;
+            }
+            
+            html += `</li></ul>`;
+            container.innerHTML = html;
+
+            // Generate Suggestions
+            suggestions.innerHTML = `
+                <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-indigo-500">
+                    <h4 class="font-bold text-white mb-2">Silo Recommendation</h4>
+                    <p class="text-sm text-slate-300">Based on your keywords, we suggest creating a strict hierarchy where internal links only flow within the same topic cluster.</p>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-green-500">
+                    <h4 class="font-bold text-white mb-2">Keyword Opportunity</h4>
+                    <p class="text-sm text-slate-300">The keyword "<strong>${keywords[0] || 'General'}</strong>" has high search volume but low competition in your current structure. Create 3 supporting articles to boost the main pillar page.</p>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-yellow-500">
+                    <h4 class="font-bold text-white mb-2">Internal Linking</h4>
+                    <p class="text-sm text-slate-300">Ensure all child pages link back to the main "${keywords[0] || 'Parent'}" silo page using exact match anchor text.</p>
+                </div>
+            `;
+        }
+
+        function processCompetitorGap(keywordsInput) {
+            const tbody = document.getElementById('gapTableBody');
+            tbody.innerHTML = '';
+            let kws = keywordsInput ? keywordsInput.split(',') : ['seo', 'marketing', 'tools'];
+            
+            kws.slice(0, 5).forEach(k => {
+                const kw = k.trim();
+                const myPos = Math.floor(Math.random() * 50) + 10;
+                const compA = Math.floor(Math.random() * 10) + 1;
+                const compB = Math.floor(Math.random() * 5) + 1;
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800">
+                        <td class="p-4 font-bold text-white">${kw}</td>
+                        <td class="p-4 text-red-400 font-bold">#${myPos}</td>
+                        <td class="p-4 text-green-400">#${compA}</td>
+                        <td class="p-4 text-blue-400">#${compB}</td>
+                        <td class="p-4 text-slate-300">${(Math.random()*10000).toFixed(0)}</td>
+                        <td class="p-4"><div class="w-16 h-2 bg-slate-700 rounded-full"><div class="h-full bg-indigo-500 rounded-full" style="width:${Math.random()*100}%"></div></div></td>
+                    </tr>
+                `;
             });
         }
 
-        function exportReport() {
-            const content = document.documentElement.outerHTML;
-            const blob = new Blob([content], {type: 'text/html'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `seo-report-${new Date().toISOString().slice(0,10)}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        function switchTab(tabName) {
+            // Hide all contents
+            ['backlinks', 'silo', 'competitor', 'technical'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('block');
+            });
+            // Remove active class from buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.add('block');
+            
+            // Set active button (simple logic based on order, could be improved with IDs)
+            const buttons = document.querySelectorAll('.tab-btn');
+            if(tabName === 'backlinks') buttons[0].classList.add('active');
+            if(tabName === 'silo') buttons[1].classList.add('active');
+            if(tabName === 'competitor') buttons[2].classList.add('active');
+            if(tabName === 'technical') buttons[3].classList.add('active');
+        }
+
+        function exportTable() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Domain,DR,External Links,Dofollow,First Seen,Anchor\n";
+            
+            currentRefDomains.forEach(row => {
+                csvContent += `${row.domain},${row.dr},${row.links},${row.dofollow},${row.firstSeen},"${row.anchor}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "referring_domains_export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
